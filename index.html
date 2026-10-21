@@ -1,0 +1,640 @@
+<title>Cancha de Verbos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: a "court" hero with XP, sticky pill tabs, one card-panel per textbook activity, accent keypad pinned at the bottom */
+:root{
+  --bg:#ECF2EF; --surface:#FFFFFF; --ink:#0F2E2B; --muted:#587570; --line:#D2DFDA;
+  --brand:#0E6B65; --brand-ink:#FFFFFF; --hot:#E5532D; --hot-ink:#FFFFFF;
+  --good:#1C8A57; --bad:#C63A3A; --hl:#FFD84A; --hl-ink:#2B2300; --soft:#E1EDE9;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1B1A; --surface:#132927; --ink:#E5F1EE; --muted:#8CAEA8; --line:#24423F;
+    --brand:#1C8B83; --brand-ink:#FFFFFF; --hot:#FF7B50; --hot-ink:#2A0E04;
+    --good:#52D390; --bad:#FF8080; --hl:#E8C53A; --hl-ink:#2B2300; --soft:#183533;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1B1A; --surface:#132927; --ink:#E5F1EE; --muted:#8CAEA8; --line:#24423F;
+  --brand:#1C8B83; --brand-ink:#FFFFFF; --hot:#FF7B50; --hot-ink:#2A0E04;
+  --good:#52D390; --bad:#FF8080; --hl:#E8C53A; --hl-ink:#2B2300; --soft:#183533;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-block:16px 96px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.1}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
+
+.hero{background:var(--brand);color:var(--brand-ink);border-radius:22px;padding:22px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:14px}
+.hero::before{content:"";position:absolute;right:-70px;top:-70px;width:250px;height:250px;border-radius:50%;border:3px solid rgba(255,255,255,.2)}
+.hero::after{content:"";position:absolute;right:54px;top:-20px;width:3px;height:300px;background:rgba(255,255,255,.2);transform:rotate(18deg)}
+.kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;opacity:.85}
+.hero h1{font-size:clamp(30px,7vw,46px);font-weight:800;position:relative;z-index:1}
+.hero h1 em{font-style:normal;background:var(--hl);color:var(--hl-ink);padding:0 .18em;border-radius:6px}
+.hero p.sub{max-width:34em;opacity:.92;position:relative;z-index:1}
+.hud{display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:relative;z-index:1}
+.chip{background:rgba(255,255,255,.16);border-radius:999px;padding:5px 12px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.chip.bump{animation:bump .5s}
+@keyframes bump{40%{transform:scale(1.15)}}
+.bar{flex:1;min-width:140px;height:10px;background:rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--hl);border-radius:999px;transition:width .5s}
+
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:6px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.tab{flex:0 0 auto;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;white-space:nowrap;display:flex;gap:7px;align-items:center}
+.tab small{font-weight:500;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab[aria-selected="true"] small{color:var(--bg);opacity:.75}
+.tab.done::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--good)}
+
+.panel{display:none;flex-direction:column;gap:14px}
+.panel.on{display:flex}
+.head{display:flex;flex-direction:column;gap:6px}
+.head h2{font-size:clamp(26px,5.5vw,34px);font-weight:800}
+.head .tag{display:inline-block;align-self:flex-start;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--hot);color:var(--hot-ink);padding:3px 10px;border-radius:6px}
+.head .tag.hw{background:var(--ink);color:var(--bg)}
+.head p{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.verbs{display:flex;gap:8px;flex-wrap:wrap}
+.vbtn{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 14px;font-family:var(--display);font-weight:800;font-size:18px}
+.vbtn[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.vtitle{font-family:var(--display);font-size:22px;font-weight:800}
+.vtitle span{color:var(--muted);font-weight:500;font-size:16px;font-family:var(--body)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cell{border:1.5px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0}
+.cell.boot{background:var(--soft);border-color:var(--brand)}
+.cell .pr{font-size:12px;color:var(--muted);font-style:italic}
+.cell .fm{font-family:var(--display);font-size:clamp(20px,5vw,26px);font-weight:800;overflow-wrap:anywhere;transition:filter .2s}
+mark{background:var(--hl);color:var(--hl-ink);border-radius:4px;padding:0 2px}
+.hidemode .cell:not(.rev) .fm{filter:blur(8px)}
+.legend{font-size:14px;color:var(--muted)}
+.legend b{color:var(--ink)}
+.tips{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.tip{border:1.5px solid var(--hot);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;background:var(--surface)}
+.tip h3{font-size:18px;color:var(--hot)}
+.tip p{font-size:15px}
+.switch{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:700;font-size:14px}
+.switch[aria-pressed="true"]{background:var(--hot);color:var(--hot-ink);border-color:var(--hot)}
+
+input[type=text],textarea{width:100%;font:inherit;font-size:17px;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+textarea{resize:vertical;min-height:70px}
+input[type=text]:focus,textarea:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 25%,transparent)}
+.btn{border:0;border-radius:12px;padding:10px 18px;font-weight:700;background:var(--brand);color:var(--brand-ink)}
+.btn.alt{background:var(--soft);color:var(--ink)}
+.btn.hot{background:var(--hot);color:var(--hot-ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.starter{border:1.5px dashed var(--line);background:transparent;border-radius:999px;padding:4px 10px;font-size:14px;color:var(--muted)}
+.starter:hover{border-color:var(--brand);color:var(--ink)}
+.prompt{font-size:18px;font-weight:700}
+.prompt .n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:14px;margin-right:8px}
+.fb{font-size:15px;font-weight:600;min-height:1.4em}
+.fb.ok{color:var(--good)} .fb.no{color:var(--bad)} .fb.meh{color:var(--hot)}
+.model{font-size:15px;background:var(--soft);border-radius:10px;padding:8px 12px}
+.item.solved{border-color:var(--good)}
+.cue{font-family:var(--display);font-size:22px;font-weight:800}
+.cue span{color:var(--hot)}
+.tray{min-height:54px;border:2px dashed var(--line);border-radius:12px;padding:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tile{border:0;background:var(--ink);color:var(--bg);border-radius:10px;padding:8px 12px;font-weight:700;font-size:17px}
+.tile.bank{background:var(--surface);color:var(--ink);border:1.5px solid var(--line);box-shadow:0 2px 0 var(--line)}
+.tile.gone{visibility:hidden}
+.checks{list-style:none;margin:0;padding:0;display:flex;gap:8px;flex-wrap:wrap}
+.checks li{border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600;color:var(--muted)}
+.checks li.y{background:var(--good);border-color:var(--good);color:#fff}
+.bubble{background:var(--soft);border-radius:16px 16px 16px 4px;padding:10px 14px;align-self:flex-start;max-width:30em;font-weight:600}
+.big{font-family:var(--display);font-size:clamp(28px,7vw,42px);font-weight:800}
+.drillq{font-family:var(--display);font-size:clamp(24px,6vw,34px);font-weight:800;display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.drillq .v{color:var(--hot)}
+.prog{height:8px;border-radius:999px;background:var(--soft);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--brand);width:0;transition:width .3s}
+.spin{font-family:var(--display);font-size:22px;font-weight:800;padding:14px;border-radius:14px;background:var(--hl);color:var(--hl-ink);min-height:70px}
+pre.out{white-space:pre-wrap;font-family:var(--body);font-size:16px;background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:14px;margin:0;overflow-wrap:anywhere}
+
+.keys{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--ink);padding:8px max(10px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.keys button{border:0;border-radius:8px;background:var(--bg);color:var(--ink);font-weight:700;font-size:18px;min-width:38px;height:38px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">Los deportes · Gramática</div>
+    <h1>Cancha de <em>Verbos</em></h1>
+    <p class="sub">Stem-changing verbs e → ie. Learn the boot, practice it, then finish today's textbook activities.</p>
+    <div class="hud">
+      <span class="chip" id="lvl">Novato</span>
+      <span class="chip" id="xp">0 XP</span>
+      <div class="bar" title="Progress"><i id="prog"></i></div>
+      <span class="chip" id="pct">0%</span>
+    </div>
+  </header>
+
+  <nav><div class="tabs" id="tabs" role="tablist"></div></nav>
+
+  <!-- LEARN -->
+  <section class="panel" id="p-learn">
+    <div class="head"><h2>The boot: los verbos e → ie</h2>
+      <p>Tap a verb. Tap any form to hear it. Turn on Hide mode, say the form, then tap to check yourself.</p></div>
+    <div class="card">
+      <div class="verbs" id="verbs"></div>
+      <div class="row"><div class="vtitle" id="vtitle"></div>
+        <button class="switch" id="hideBtn" aria-pressed="false">Hide mode</button></div>
+      <div class="grid" id="vgrid"></div>
+      <p class="legend"><b>Shaded boxes</b> are inside the boot: <b>yo, tú, él/ella/Ud., ellos/ellas/Uds.</b> change e → <mark>ie</mark>. <b>Nosotros</b> and <b>vosotros</b> stay outside the boot and keep the e. The endings are the same as a regular verb.</p>
+    </div>
+    <div class="tips">
+      <div class="tip"><h3>¡Ojo!</h3><p>If you pronounce the verb form correctly, you will write it correctly. Say it out loud as you write.</p></div>
+      <div class="tip"><h3>¿Lo sabes?</h3><p>Empezar and comenzar (to begin) need <b>a</b> before an infinitive: <b>Empiezan a jugar.</b> <b>Comienzan a jugar.</b></p></div>
+      <div class="tip"><h3>¡Así se dice!</h3><p>Tener follows the same pattern, except the yo form: <b>tengo</b>, tienes, tiene, tenemos, tenéis, tienen.</p></div>
+    </div>
+  </section>
+
+  <!-- DRILL -->
+  <section class="panel" id="p-drill">
+    <div class="head"><h2>Calentamiento</h2><p>Warm-up. Ten quick conjugations. Type the correct form of the verb.</p></div>
+    <div class="card" id="drillCard"></div>
+  </section>
+
+  <!-- ACT 1 -->
+  <section class="panel" id="p-a1">
+    <div class="head"><span class="tag">Act. 1</span><h2>Personaliza</h2><p>Answer about yourself and some friends. Questions use <b>ustedes</b>, so answer with <b>nosotros</b> (we).</p></div>
+    <div id="a1"></div>
+  </section>
+
+  <!-- ACT 2 -->
+  <section class="panel" id="p-a2">
+    <div class="head"><span class="tag hw">Tarea · Pág. 183, Act. 2</span><h2>Forma frases</h2><p>Form sentences. Tap the words in the right order. Careful: some tiles are the wrong form of the verb.</p></div>
+    <div id="a2"></div>
+  </section>
+
+  <!-- ACT 3 -->
+  <section class="panel" id="p-a3">
+    <div class="head"><span class="tag">Act. 3</span><h2>Llamada del partido</h2><p>You are at a school sporting event. Respond to your friend using all five verbs.</p></div>
+    <div class="card">
+      <div class="bubble">¿Cómo va el equipo? ¿Qué pasa en el partido?</div>
+      <ul class="checks" id="a3checks"></ul>
+      <div class="row" id="a3st"></div>
+      <textarea id="a3t" rows="4" placeholder="Escribe tu respuesta..."></textarea>
+      <div class="fb" id="a3fb"></div>
+    </div>
+  </section>
+
+  <!-- ACT 4 -->
+  <section class="panel" id="p-a4">
+    <div class="head"><span class="tag">Act. 4</span><h2>Mensajes de texto</h2><p>Write what you would text back. Say what <b>you</b> prefer and ask your friend too.</p></div>
+    <div id="a4"></div>
+  </section>
+
+  <!-- ACT 5 -->
+  <section class="panel" id="p-a5">
+    <div class="head"><span class="tag">Act. 5</span><h2>Un correo para el fin de semana</h2><p>Write an e-mail to a friend. Offer at least two alternatives so your friend can choose.</p></div>
+    <div class="card">
+      <ul class="checks" id="a5checks"></ul>
+      <div class="row" id="a5st"></div>
+      <textarea id="a5t" rows="7" placeholder="Hola, ..."></textarea>
+      <div class="row"><button class="btn alt" id="a5tpl">Show a template</button></div>
+      <div class="fb" id="a5fb"></div>
+    </div>
+  </section>
+
+  <!-- ACT 7 -->
+  <section class="panel" id="p-a7">
+    <div class="head"><span class="tag hw">Tarea · Pág. 185, Act. 7</span><h2>Personaliza</h2><p>Ask each other and respond about yourself. In class, spin for a question and ask your partner out loud. Then write your own answers.</p></div>
+    <div class="card"><div class="spin" id="spin">Tap the button to pick a question.</div>
+      <div class="row"><button class="btn hot" id="spinBtn">Spin a question</button></div></div>
+    <div id="a7"></div>
+  </section>
+
+  <!-- ACT 8 -->
+  <section class="panel" id="p-a8">
+    <div class="head"><span class="tag hw">Tarea · Pág. 185, Act. 8</span><h2>Sigue el modelo</h2><p>Make up sentences as in the model.</p></div>
+    <div class="card"><div class="cue">MODELO &nbsp; ellas / jugar básquetbol <span>→</span> Ellas juegan básquetbol.</div>
+      <p class="legend">Watch for the verb. Some are e → ie, some are o → ue (volver, poder, jugar), and tener que needs the tener forms.</p></div>
+    <div id="a8"></div>
+  </section>
+
+  <!-- MY WORK -->
+  <section class="panel" id="p-tarea">
+    <div class="head"><h2>Mi tarea</h2><p>Your correct answers from Act. 2, 7 and 8 collect here. Check <b>el modelo</b> in Google Classroom for the layout, then copy your work into it.</p></div>
+    <div class="card">
+      <input type="text" id="nm" placeholder="Name / Nombre" autocomplete="off">
+      <pre class="out" id="out"></pre>
+      <div class="row"><button class="btn" id="copyBtn">Copy my work</button><button class="btn alt" id="resetBtn">Reset everything</button><span class="fb" id="cfb"></span></div>
+    </div>
+  </section>
+</div>
+
+<div class="keys" id="keys" aria-label="Accent keys"></div>
+
+<script>
+(function(){
+"use strict";
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var KEY="cancha-de-verbos-v1";
+var st={xp:0,done:{},ans:{},name:""};
+try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);if(o&&typeof o==="object"){st.xp=o.xp||0;st.done=o.done||{};st.ans=o.ans||{};st.name=o.name||""}}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+
+/* ---------- helpers ---------- */
+function noAcc(s){return s.normalize("NFD").replace(/[̀-ͯ]/g,"")}
+function clean(s){return s.toLowerCase().replace(/[¿¡?!.,;:"]/g," ").replace(/\s+/g," ").trim()}
+function cmp(user,ans){
+  var u=clean(user),a=clean(ans);
+  if(u===a)return "ok";
+  if(noAcc(u)===noAcc(a))return "accent";
+  return "no";
+}
+function cmpAny(user,list){
+  var best="no";
+  for(var i=0;i<list.length;i++){var r=cmp(user,list[i]);if(r==="ok")return "ok";if(r==="accent")best="accent"}
+  return best;
+}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function speak(t){try{var u=new SpeechSynthesisUtterance(t);u.lang="es-ES";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+
+var TOTAL=["a1_0","a1_1","a1_2","a1_3","a1_4","a2_0","a2_1","a2_2","a2_3","a2_4","a2_5","a3","a4_0","a4_1","a4_2","a4_3","a5","a7_0","a7_1","a7_2","a7_3","a7_4","a7_5","a8_0","a8_1","a8_2","a8_3","a8_4","a8_5","drill"];
+var LEVELS=[[0,"Novato"],[60,"Suplente"],[140,"Titular"],[220,"Capitán"],[300,"Estrella"]];
+function hud(bump){
+  var lv=LEVELS[0][1];LEVELS.forEach(function(l){if(st.xp>=l[0])lv=l[1]});
+  $("#lvl").textContent=lv;$("#xp").textContent=st.xp+" XP";
+  var n=TOTAL.filter(function(k){return st.done[k]}).length,p=Math.round(n/TOTAL.length*100);
+  $("#prog").style.width=p+"%";$("#pct").textContent=p+"%";
+  if(bump){var c=$("#xp");c.classList.remove("bump");void c.offsetWidth;c.classList.add("bump")}
+  $$(".tab").forEach(function(t){
+    var pre=t.dataset.pre;if(!pre)return;
+    var keys=TOTAL.filter(function(k){return k===pre||k.indexOf(pre+"_")===0});
+    t.classList.toggle("done",keys.length>0&&keys.every(function(k){return st.done[k]}));
+  });
+}
+function award(k,n){if(!st.done[k]){st.done[k]=1;st.xp+=(n||10);save();hud(true);return true}return false}
+function setAns(k,v){st.ans[k]=v;save()}
+
+/* ---------- tabs ---------- */
+var TABS=[["learn","Aprende","","The boot"],["drill","Calentamiento","drill",""],["a1","Act. 1","a1",""],["a2","Act. 2","a2","tarea"],["a3","Act. 3","a3",""],["a4","Act. 4","a4",""],["a5","Act. 5","a5",""],["a7","Act. 7","a7","tarea"],["a8","Act. 8","a8","tarea"],["tarea","Mi tarea","",""]];
+function buildTabs(){
+  var h="";
+  TABS.forEach(function(t,i){h+='<button class="tab" role="tab" data-t="'+t[0]+'" data-pre="'+t[2]+'" aria-selected="'+(i===0)+'">'+t[1]+(t[3]==="tarea"?" <small>tarea</small>":"")+"</button>"});
+  $("#tabs").innerHTML=h;
+  $("#tabs").addEventListener("click",function(e){var b=e.target.closest(".tab");if(b)go(b.dataset.t)});
+}
+function go(id){
+  $$(".tab").forEach(function(t){t.setAttribute("aria-selected",String(t.dataset.t===id))});
+  $$(".panel").forEach(function(p){p.classList.toggle("on",p.id==="p-"+id)});
+  if(id==="tarea")renderOut();
+  var sel=$('.tab[data-t="'+id+'"]');if(sel&&sel.scrollIntoView)sel.scrollIntoView({block:"nearest",inline:"center"});
+  window.scrollTo(0,0);
+}
+
+/* ---------- LEARN ---------- */
+var FORMS={
+  querer:{en:"to want",f:["quiero","quieres","quiere","queremos","queréis","quieren"]},
+  empezar:{en:"to begin",f:["empiezo","empiezas","empieza","empezamos","empezáis","empiezan"]},
+  pensar:{en:"to think",f:["pienso","piensas","piensa","pensamos","pensáis","piensan"]},
+  perder:{en:"to lose",f:["pierdo","pierdes","pierde","perdemos","perdéis","pierden"]},
+  preferir:{en:"to prefer",f:["prefiero","prefieres","prefiere","preferimos","preferís","prefieren"]}
+};
+var PRON=["yo","tú","Ud., él, ella","nosotros(as)","vosotros(as)","Uds., ellos, ellas"];
+var ORDER=[0,3,1,4,2,5];
+var BOOT=[0,1,2,5];
+function hlStem(f,i){
+  if(BOOT.indexOf(i)<0)return esc(f);
+  var k=f.indexOf("ie");if(k<0)return esc(f);
+  return esc(f.slice(0,k))+"<mark>ie</mark>"+esc(f.slice(k+2));
+}
+var curVerb="querer";
+function renderLearn(){
+  var vh="";Object.keys(FORMS).forEach(function(v){vh+='<button class="vbtn" data-v="'+v+'" aria-pressed="'+(v===curVerb)+'">'+v+"</button>"});
+  $("#verbs").innerHTML=vh;
+  $("#vtitle").innerHTML=curVerb+" <span>"+FORMS[curVerb].en+"</span>";
+  var g="";
+  ORDER.forEach(function(i){
+    g+='<button class="cell '+(BOOT.indexOf(i)>=0?"boot":"out")+'" data-i="'+i+'"><span class="pr">'+PRON[i]+'</span><span class="fm">'+hlStem(FORMS[curVerb].f[i],i)+"</span></button>";
+  });
+  $("#vgrid").innerHTML=g;
+}
+function initLearn(){
+  renderLearn();
+  $("#verbs").addEventListener("click",function(e){var b=e.target.closest(".vbtn");if(b){curVerb=b.dataset.v;renderLearn()}});
+  $("#vgrid").addEventListener("click",function(e){
+    var c=e.target.closest(".cell");if(!c)return;
+    c.classList.add("rev");speak(FORMS[curVerb].f[+c.dataset.i]);
+  });
+  $("#hideBtn").addEventListener("click",function(){
+    var on=this.getAttribute("aria-pressed")!=="true";
+    this.setAttribute("aria-pressed",String(on));
+    $("#vgrid").classList.toggle("hidemode",on);
+    $$(".cell").forEach(function(c){c.classList.remove("rev")});
+  });
+}
+
+/* ---------- DRILL ---------- */
+var SUBJ=[["yo",0],["tú",1],["Javier",2],["ella",2],["el portero",2],["nosotros",3],["vosotros",4],["los jugadores",5],["ellas",5],["ustedes",5],["el equipo",2],["mi amiga y yo",3]];
+var dq=[],di=0,dscore=0,dstate="ask";
+function newDrill(){
+  dq=[];var vs=Object.keys(FORMS);
+  shuffle(SUBJ).slice(0,10).forEach(function(s){dq.push({s:s[0],i:s[1],v:vs[Math.floor(Math.random()*vs.length)]})});
+  di=0;dscore=0;dstate="ask";renderDrill();
+}
+function renderDrill(){
+  var c=$("#drillCard");
+  if(di>=dq.length){
+    if(dscore>=8)award("drill",20);
+    c.innerHTML='<div class="big">'+dscore+' / '+dq.length+'</div><p>'+(dscore>=8?"¡Excelente! You earned your warm-up badge.":"Good effort. Play again to reach 8 or more.")+'</p><div class="row"><button class="btn" id="again">Play again</button></div>';
+    $("#again").onclick=newDrill;return;
+  }
+  var q=dq[di];
+  c.innerHTML='<div class="prog"><i style="width:'+(di/dq.length*100)+'%"></i></div>'+
+   '<div class="drillq"><span>'+esc(q.s)+'</span><span class="v">('+q.v+')</span></div>'+
+   '<input type="text" id="dans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type the form">'+
+   '<div class="fb" id="dfb"></div><div class="row"><button class="btn" id="dgo">Check</button></div>';
+  var inp=$("#dans"),fb=$("#dfb"),btn=$("#dgo");dstate="ask";
+  function act(){
+    if(dstate==="next"){di++;renderDrill();return}
+    var u=inp.value;if(!u.trim()){fb.className="fb meh";fb.textContent="Type an answer first.";return}
+    var ans=FORMS[q.v].f[q.i],r=cmp(u,ans);
+    if(r==="ok"||r==="accent"){dscore++;st.xp+=5;save();hud(true);fb.className="fb ok";fb.textContent=r==="ok"?"¡Correcto! "+ans:"Right form! Watch the accent: "+ans}
+    else{fb.className="fb no";fb.innerHTML="Not quite. Answer: <b>"+esc(ans)+"</b>"}
+    dstate="next";btn.textContent=di===dq.length-1?"See score":"Next";
+  }
+  btn.onclick=act;
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter")act()});
+  inp.focus();
+}
+
+/* ---------- generic free-write items ---------- */
+function freeItems(host,pre,items){
+  var h="";
+  items.forEach(function(it,i){
+    h+='<div class="card item" id="'+pre+'_'+i+'_c" style="margin-bottom:12px"><div class="prompt"><span class="n">'+(i+1)+'</span>'+esc(it.q)+'</div>'+
+    '<div class="row">'+it.st.map(function(s){return '<button class="starter" data-s="'+esc(s)+'">'+esc(s)+'</button>'}).join("")+'</div>'+
+    '<textarea id="'+pre+'_'+i+'_t" rows="2" placeholder="Escribe aquí..."></textarea>'+
+    '<div class="fb" id="'+pre+'_'+i+'_f"></div><div class="row"><button class="btn" data-chk="'+i+'">Check</button><button class="btn alt" data-mod="'+i+'">Show a model</button></div>'+
+    '<div class="model" id="'+pre+'_'+i+'_m" hidden>'+esc(it.model)+'</div></div>';
+  });
+  $(host).innerHTML=h;
+  items.forEach(function(it,i){
+    var t=$("#"+pre+"_"+i+"_t");
+    if(st.ans[pre+"_"+i]){t.value=st.ans[pre+"_"+i];if(st.done[pre+"_"+i]){$("#"+pre+"_"+i+"_c").classList.add("solved")}}
+  });
+  $(host).addEventListener("click",function(e){
+    var s=e.target.closest(".starter");
+    if(s){
+      var card=s.closest(".item"),ta=$("textarea",card);
+      ta.value=(ta.value&&!/\s$/.test(ta.value)?ta.value+" ":ta.value)+s.dataset.s;ta.focus();return;
+    }
+    var m=e.target.closest("[data-mod]");
+    if(m){var el=$("#"+pre+"_"+m.dataset.mod+"_m");el.hidden=!el.hidden;return}
+    var c=e.target.closest("[data-chk]");
+    if(c){
+      var i=+c.dataset.chk,it=items[i],ta=$("#"+pre+"_"+i+"_t"),fb=$("#"+pre+"_"+i+"_f"),v=ta.value.trim();
+      if(!v){fb.className="fb meh";fb.textContent="Write something first.";return}
+      setAns(pre+"_"+i,v);
+      if(it.ok(noAcc(v.toLowerCase()),v)){
+        var first=award(pre+"_"+i);
+        fb.className="fb ok";fb.textContent="¡Muy bien!"+(first?" +10 XP":"");
+        $("#"+pre+"_"+i+"_c").classList.add("solved");
+      }else{fb.className="fb no";fb.textContent=it.hint}
+    }
+  });
+  $(host).addEventListener("input",function(e){if(e.target.tagName==="TEXTAREA"){var id=e.target.id.replace("_t","");setAns(id,e.target.value)}});
+}
+
+var A1=[
+ {q:"¿Quieren ustedes jugar fútbol?",st:["Sí, queremos","No, no queremos","jugar fútbol."],ok:function(t){return /quer/.test(t)},hint:"Answer for you and your friends: use queremos.",model:"Sí, queremos jugar fútbol."},
+ {q:"¿Empiezan ustedes a jugar a las tres y media?",st:["Sí, empezamos a jugar","No, empezamos a las"],ok:function(t){return /empez|comenz/.test(t)},hint:"Use empezamos a + infinitive, or comenzamos a.",model:"Sí, empezamos a jugar a las tres y media."},
+ {q:"¿Quieren ustedes ganar?",st:["Sí, queremos ganar.","Sí, siempre queremos"],ok:function(t){return /quer/.test(t)},hint:"Use queremos.",model:"Sí, queremos ganar."},
+ {q:"¿Pierden ustedes a veces?",st:["Sí, a veces perdemos.","No, no perdemos"],ok:function(t){return /perd/.test(t)},hint:"Use perdemos.",model:"Sí, a veces perdemos."},
+ {q:"¿Dónde prefieren ustedes jugar?",st:["Preferimos jugar en","el parque","la cancha"],ok:function(t){return /prefer/.test(t)},hint:"Use preferimos + jugar + a place.",model:"Preferimos jugar en el parque."}
+];
+var A4=[
+ {q:"¿Prefieres jugar béisbol o fútbol?",st:["Prefiero jugar","béisbol","fútbol","¿Y tú?"],ok:function(t){return /prefier/.test(t)&&/\?/.test(t)},hint:"Say what you prefer (prefiero) and ask your friend: ¿Y tú?",model:"Prefiero jugar fútbol. ¿Y tú, qué prefieres?"},
+ {q:"¿Prefieres jugar con un grupo de amigos o con un equipo organizado?",st:["Prefiero jugar con","un grupo de amigos","un equipo organizado","¿Y tú?"],ok:function(t){return /prefier/.test(t)&&/\?/.test(t)},hint:"Use prefiero and ask back with ¿Y tú?",model:"Prefiero jugar con un grupo de amigos. ¿Y tú?"},
+ {q:"¿Prefieres jugar o ser espectador(a)?",st:["Prefiero jugar.","Prefiero ser espectador(a).","¿Y tú?"],ok:function(t){return /prefier/.test(t)&&/\?/.test(t)},hint:"Use prefiero and ask back with ¿Y tú?",model:"Prefiero jugar. ¿Prefieres ser espectador(a)?"},
+ {q:"¿Siempre quieres ganar?",st:["Sí, siempre quiero ganar.","No, no siempre quiero ganar.","¿Y tú?"],ok:function(t){return /quier/.test(t)&&/\?/.test(t)},hint:"Use quiero and ask back: ¿Y tú, siempre quieres ganar?",model:"No, no siempre quiero ganar. ¿Y tú, siempre quieres ganar?"}
+];
+var A7=[
+ {q:"¿A qué hora empieza tu clase de español?",st:["Mi clase de español empieza a las","y media","y cuarto"],ok:function(t){return /empiez/.test(t)},hint:"Use empieza: Mi clase empieza a las...",model:"Mi clase de español empieza a las nueve y media."},
+ {q:"¿Puedes hablar inglés en la clase de español?",st:["No, no puedo hablar inglés.","Sí, a veces puedo"],ok:function(t){return /puedo/.test(t)},hint:"Answer about yourself: puedo / no puedo.",model:"No, no puedo hablar inglés en la clase de español."},
+ {q:"¿A veces juegas bingo en la clase de español?",st:["Sí, a veces juego bingo.","No, no juego bingo"],ok:function(t){return /juego/.test(t)},hint:"Answer about yourself: juego / no juego.",model:"Sí, a veces juego bingo en la clase de español."},
+ {q:"¿Duermes en clase?",st:["No, no duermo en clase.","A veces duermo"],ok:function(t){return /duermo/.test(t)},hint:"Answer about yourself: duermo / no duermo.",model:"No, no duermo en clase."},
+ {q:"Cuando tomas un examen, ¿devuelve tu profesor(a) los exámenes pronto?",st:["Sí, mi profesor(a) devuelve","los exámenes pronto.","No, no devuelve"],ok:function(t){return /devuelve/.test(t)},hint:"Talk about your teacher: devuelve / no devuelve.",model:"Sí, mi profesora devuelve los exámenes pronto."},
+ {q:"¿A qué hora vuelves a casa después de las clases?",st:["Vuelvo a casa a las","tres y media","cuatro"],ok:function(t){return /vuelvo/.test(t)},hint:"Answer about yourself: vuelvo a casa a las...",model:"Vuelvo a casa a las cuatro."}
+];
+
+/* ---------- ACT 2 tiles ---------- */
+var A2=[
+ {cue:"los jugadores / empezar a jugar",ans:"Los jugadores empiezan a jugar.",dis:["empieza","empezamos"]},
+ {cue:"los dos equipos / querer ganar",ans:"Los dos equipos quieren ganar.",dis:["quiere","queremos"]},
+ {cue:"el equipo de Javier / querer ganar",ans:"El equipo de Javier quiere ganar.",dis:["quieren","quiero"]},
+ {cue:"Javier / querer meter un gol",ans:"Javier quiere meter un gol.",dis:["quieren","queremos"]},
+ {cue:"el portero / querer bloquear el balón",ans:"El portero quiere bloquear el balón.",dis:["quieren","quiero"]},
+ {cue:"el equipo de Javier / perder",ans:"El equipo de Javier pierde.",dis:["pierden","perdemos"],alt:["El equipo de Javier pierde.","El equipo de Javier pierde"]}
+];
+A2[5].ans="El equipo de Javier pierde.";
+function lab(w){return w==="Javier"?w:w.toLowerCase()}
+function renderA2(){
+  var host=$("#a2"),h="";
+  A2.forEach(function(it,i){
+    h+='<div class="card item" id="a2c'+i+'" style="margin-bottom:12px"><div class="prompt"><span class="n">'+(i+1)+'</span><span class="cue" style="font-size:19px">'+esc(it.cue)+'</span></div>'+
+    '<div class="tray" id="a2tr'+i+'"></div><div class="row" id="a2bk'+i+'"></div><div class="fb" id="a2f'+i+'"></div>'+
+    '<div class="row"><button class="btn" data-chk="'+i+'">Check</button><button class="btn alt" data-clr="'+i+'">Clear</button></div></div>';
+  });
+  host.innerHTML=h;
+  var sel=[],tiles=[];
+  A2.forEach(function(it,i){
+    var words=it.ans.replace(/[.]/g,"").split(" ").concat(it.dis);
+    tiles[i]=shuffle(words.map(function(w,k){return {id:k,w:lab(w)}}));
+    sel[i]=[];draw(i);
+  });
+  function sentence(i){
+    return sel[i].map(function(id){return tiles[i].filter(function(t){return t.id===id})[0].w}).join(" ");
+  }
+  function draw(i){
+    $("#a2tr"+i).innerHTML=sel[i].map(function(id,k){var t=tiles[i].filter(function(x){return x.id===id})[0];return '<button class="tile" data-i="'+i+'" data-pos="'+k+'">'+esc(t.w)+"</button>"}).join("");
+    $("#a2bk"+i).innerHTML=tiles[i].map(function(t){var used=sel[i].indexOf(t.id)>=0;return '<button class="tile bank'+(used?" gone":"")+'" data-i="'+i+'" data-id="'+t.id+'">'+esc(t.w)+"</button>"}).join("");
+  }
+  host.addEventListener("click",function(e){
+    var b=e.target.closest("button");if(!b)return;
+    if(b.dataset.id!==undefined){var i=+b.dataset.i;sel[i].push(+b.dataset.id);draw(i);return}
+    if(b.dataset.pos!==undefined){var j=+b.dataset.i;sel[j].splice(+b.dataset.pos,1);draw(j);return}
+    if(b.dataset.clr!==undefined){var k=+b.dataset.clr;sel[k]=[];draw(k);$("#a2f"+k).textContent="";return}
+    if(b.dataset.chk!==undefined){
+      var n=+b.dataset.chk,fb=$("#a2f"+n),it=A2[n];
+      if(!sel[n].length){fb.className="fb meh";fb.textContent="Tap the words to build the sentence.";return}
+      var r=cmp(sentence(n),it.ans);
+      if(r==="ok"){
+        setAns("a2_"+n,it.ans);var f=award("a2_"+n);
+        fb.className="fb ok";fb.textContent="¡Perfecto! "+it.ans+(f?" +10 XP":"");$("#a2c"+n).classList.add("solved");
+      }else{fb.className="fb no";fb.textContent="Check the verb form and the word order. Remember: tiles with the wrong verb form are traps."}
+    }
+  });
+  A2.forEach(function(it,i){if(st.done["a2_"+i]){$("#a2c"+i).classList.add("solved");$("#a2f"+i).className="fb ok";$("#a2f"+i).textContent=it.ans}});
+}
+
+/* ---------- ACT 8 ---------- */
+var A8=[
+ {cue:"juego / empezar ahora",ans:["El juego empieza ahora."],hint:"juego here is a noun (the game): el juego ___ ahora."},
+ {cue:"jugadoras / volver a la cancha",ans:["Las jugadoras vuelven a la cancha."],hint:"volver changes o → ue. Which form goes with jugadoras?"},
+ {cue:"tú / tener que driblar",ans:["Tú tienes que driblar."],hint:"tener with tú: tienes. Then que + infinitive."},
+ {cue:"Catalina / querer encestar",ans:["Catalina quiere encestar."],hint:"Catalina is she: quiere."},
+ {cue:"su equipo / no poder perder",ans:["Su equipo no puede perder."],hint:"poder changes o → ue. Put no before the verb."},
+ {cue:"nosotros / tener que ganar",ans:["Nosotros tenemos que ganar."],hint:"nosotros stays outside the boot: tenemos."}
+];
+function renderA8(){
+  var host=$("#a8"),h="";
+  A8.forEach(function(it,i){
+    h+='<div class="card item" id="a8c'+i+'" style="margin-bottom:12px"><div class="prompt"><span class="n">'+(i+1)+'</span><span class="cue" style="font-size:19px">'+esc(it.cue)+'</span></div>'+
+    '<input type="text" id="a8i'+i+'" autocomplete="off" autocapitalize="sentences" spellcheck="false" placeholder="Escribe la frase...">'+
+    '<div class="fb" id="a8f'+i+'"></div><div class="row"><button class="btn" data-chk="'+i+'">Check</button><button class="btn alt" data-hint="'+i+'">Hint</button></div></div>';
+  });
+  host.innerHTML=h;
+  A8.forEach(function(it,i){if(st.done["a8_"+i]){$("#a8c"+i).classList.add("solved");$("#a8i"+i).value=it.ans[0];var f=$("#a8f"+i);f.className="fb ok";f.textContent="¡Correcto!"}});
+  host.addEventListener("click",function(e){
+    var b=e.target.closest("button");if(!b)return;
+    if(b.dataset.hint!==undefined){var n=+b.dataset.hint,f=$("#a8f"+n);f.className="fb meh";f.textContent=A8[n].hint;return}
+    if(b.dataset.chk!==undefined){
+      var i=+b.dataset.chk,it=A8[i],inp=$("#a8i"+i),fb=$("#a8f"+i),v=inp.value.trim();
+      if(!v){fb.className="fb meh";fb.textContent="Write a sentence first.";return}
+      var r=cmpAny(v,it.ans);
+      if(r==="ok"||r==="accent"){
+        setAns("a8_"+i,it.ans[0]);var f2=award("a8_"+i);
+        fb.className="fb ok";
+        fb.textContent=(r==="ok"?"¡Correcto! ":"Right sentence! Check the accents: ")+it.ans[0]+(f2?" +10 XP":"");
+        $("#a8c"+i).classList.add("solved");
+      }else{fb.className="fb no";fb.textContent="Not yet. Tap Hint if you need help."}
+    }
+  });
+}
+
+/* ---------- ACT 3 & 5 live checks ---------- */
+function anyForm(t,v){return FORMS[v].f.some(function(f){return new RegExp("(^|[^a-z])"+noAcc(f)+"([^a-z]|$)").test(t)})}
+function liveCheck(taId,listId,rules,doneKey,fbId,stId){
+  var ta=$(taId),ul=$(listId),fb=$(fbId);
+  ul.innerHTML=rules.map(function(r,i){return '<li data-i="'+i+'">'+r.label+"</li>"}).join("");
+  function run(){
+    var t=noAcc(ta.value.toLowerCase()),all=true;
+    rules.forEach(function(r,i){var y=r.test(t,ta.value);$("li[data-i='"+i+"']",ul).classList.toggle("y",y);if(!y)all=false});
+    if(ta.value.trim())setAns(doneKey+"_text",ta.value);
+    if(all){var f=award(doneKey);fb.className="fb ok";fb.textContent="¡Excelente! Everything is covered."+(f?" +10 XP":"")}
+    else{fb.className="fb";fb.textContent=""}
+  }
+  ta.addEventListener("input",run);
+  if(st.ans[doneKey+"_text"])ta.value=st.ans[doneKey+"_text"];
+  run();
+  return ta;
+}
+function starterRow(id,list,taId){
+  var el=$(id);
+  el.innerHTML=list.map(function(s){return '<button class="starter" data-s="'+esc(s)+'">'+esc(s)+"</button>"}).join("");
+  el.addEventListener("click",function(e){
+    var b=e.target.closest(".starter");if(!b)return;
+    var ta=$(taId);ta.value=(ta.value&&!/\s$/.test(ta.value)?ta.value+" ":ta.value)+b.dataset.s;ta.focus();
+    ta.dispatchEvent(new Event("input"));
+  });
+}
+
+/* ---------- ACT 7 spinner ---------- */
+function initSpin(){
+  var last=-1;
+  $("#spinBtn").addEventListener("click",function(){
+    var i;do{i=Math.floor(Math.random()*A7.length)}while(i===last);last=i;
+    $("#spin").textContent=(i+1)+". "+A7[i].q;speak(A7[i].q);
+  });
+}
+
+/* ---------- MY WORK ---------- */
+function renderOut(){
+  var L=[];
+  if(st.name)L.push(st.name);
+  L.push("");L.push("Pág. 183, Act. 2");
+  A2.forEach(function(it,i){L.push((i+1)+". "+(st.ans["a2_"+i]||"—"))});
+  L.push("");L.push("Pág. 185, Act. 7");
+  A7.forEach(function(it,i){L.push((i+1)+". "+(st.ans["a7_"+i]||"—"))});
+  L.push("");L.push("Pág. 185, Act. 8");
+  A8.forEach(function(it,i){L.push((i+1)+". "+(st.ans["a8_"+i]||"—"))});
+  $("#out").textContent=L.join("\n").trim();
+}
+function initOut(){
+  var nm=$("#nm");nm.value=st.name;
+  nm.addEventListener("input",function(){st.name=nm.value;save();renderOut()});
+  $("#copyBtn").addEventListener("click",function(){
+    var txt=$("#out").textContent,fb=$("#cfb");
+    function sel(){var r=document.createRange();r.selectNodeContents($("#out"));var s=getSelection();s.removeAllRanges();s.addRange(r)}
+    try{navigator.clipboard.writeText(txt).then(function(){fb.className="fb ok";fb.textContent="Copied!"},function(){sel();fb.className="fb meh";fb.textContent="Text selected. Press copy."})}
+    catch(e){sel();fb.className="fb meh";fb.textContent="Text selected. Press copy."}
+  });
+  var armed=false;
+  $("#resetBtn").addEventListener("click",function(){
+    var b=this;
+    if(!armed){armed=true;b.textContent="Tap again to erase all";setTimeout(function(){armed=false;b.textContent="Reset everything"},3500);return}
+    st={xp:0,done:{},ans:{},name:""};save();location.reload();
+  });
+}
+
+/* ---------- accent keys ---------- */
+var lastEl=null;
+function initKeys(){
+  var chars=["á","é","í","ó","ú","ü","ñ","¿","¡"];
+  $("#keys").innerHTML=chars.map(function(c){return '<button type="button" data-c="'+c+'">'+c+"</button>"}).join("");
+  document.addEventListener("focusin",function(e){if(e.target.matches("input[type=text],textarea"))lastEl=e.target});
+  $("#keys").addEventListener("mousedown",function(e){e.preventDefault()});
+  $("#keys").addEventListener("click",function(e){
+    var b=e.target.closest("button");if(!b||!lastEl)return;
+    var el=lastEl,s=el.selectionStart,en=el.selectionEnd,v=el.value;
+    el.value=v.slice(0,s)+b.dataset.c+v.slice(en);
+    el.selectionStart=el.selectionEnd=s+1;el.focus();
+    el.dispatchEvent(new Event("input",{bubbles:true}));
+  });
+}
+
+/* ---------- boot ---------- */
+buildTabs();
+initLearn();
+newDrill();
+freeItems("#a1","a1",A1);
+renderA2();
+freeItems("#a4","a4",A4);
+freeItems("#a7","a7",A7);
+renderA8();
+initSpin();
+initOut();
+initKeys();
+
+liveCheck("#a3t","#a3checks",[
+  {label:"empezar",test:function(t){return anyForm(t,"empezar")}},
+  {label:"pensar",test:function(t){return anyForm(t,"pensar")}},
+  {label:"perder",test:function(t){return anyForm(t,"perder")}},
+  {label:"querer",test:function(t){return anyForm(t,"querer")}},
+  {label:"preferir",test:function(t){return anyForm(t,"preferir")}}
+],"a3","#a3fb");
+starterRow("#a3st",["Los jugadores empiezan a jugar.","Pienso que mi equipo va a ganar.","No queremos perder.","Prefiero el segundo tiempo.","Nuestro equipo pierde ahora."],"#a3t");
+
+liveCheck("#a5t","#a5checks",[
+  {label:"Saludo (Hola...)",test:function(t){return /(hola|querido|querida)/.test(t)}},
+  {label:"Pregunta (¿...?)",test:function(t){return /\?/.test(t)}},
+  {label:"quieres / prefieres",test:function(t){return /(quieres|prefieres|quiero|prefiero)/.test(t)}},
+  {label:"Dos opciones (o)",test:function(t){return /\bo\b/.test(t)}},
+  {label:"Despedida",test:function(t){return /(hasta|chao|adios|saludos|abrazo|tu amig)/.test(t)}}
+],"a5","#a5fb");
+starterRow("#a5st",["Hola,","¿Quieres jugar fútbol o ir al cine?","¿Prefieres ver una película o comer pizza?","Hasta pronto,","Tu amigo/a"],"#a5t");
+$("#a5tpl").addEventListener("click",function(){
+  var ta=$("#a5t");
+  if(!ta.value.trim()){ta.value="Hola Marcos,\n\n¿Quieres hacer algo este fin de semana? Yo prefiero jugar fútbol en el parque, pero también podemos ver una película o comer pizza. ¿Qué prefieres?\n\nHasta pronto,\nSofía";ta.dispatchEvent(new Event("input"))}
+});
+
+go("learn");
+hud(false);
+})();
+</script>
